@@ -29,7 +29,6 @@ export default function App() {
 
     const spline = splineRef.current;
 
-    console.log('Updating object visibility...');
     const visibleObjects = [defaultVisibleObject].concat(
       rewards.flatMap((reward) =>
         Array.isArray(objectMap[reward.replace('Reward #', '')])
@@ -44,9 +43,6 @@ export default function App() {
         const object = spline.findObjectByName(objectName);
         if (object) {
           object.visible = visibleObjects.includes(objectName);
-          console.log(
-            `Set ${objectName} to ${object.visible ? 'visible' : 'invisible'}`
-          );
         }
       });
 
@@ -66,8 +62,6 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      console.log('Fetched levels and rewards:', data);
-
       setCurrentLevel(data.currentLevel);
       setRewards(data.rewards || []);
     } catch (err) {
@@ -75,12 +69,16 @@ export default function App() {
     }
   };
 
+  const logout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/'; // Redirect to login page
+  };
+
   useEffect(() => {
     updateVisibility();
   }, [rewards]);
 
   const onLoad = (spline) => {
-    console.log('Spline loaded!');
     splineRef.current = spline;
     updateVisibility();
   };
@@ -126,11 +124,8 @@ export default function App() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.message) {
-          console.log(data.message);
-          setRewards((prev) => [...prev, `Reward #${level}`]);
-          setCurrentLevel(level + 1);
-        }
+        setRewards((prev) => [...prev, `Reward #${level}`]);
+        setCurrentLevel(level + 1);
       })
       .catch((err) => console.error('Error completing reward:', err));
   };
@@ -147,15 +142,12 @@ export default function App() {
       },
     })
       .then((res) => res.json())
-      .then((data) => {
-        if (data.message) {
-          console.log(data.message);
-          setRewards([]);
-          setCurrentLevel(1);
-          setTimeLeft(0);
-          if (timer) clearInterval(timer);
-          setTimer(null);
-        }
+      .then(() => {
+        setRewards([]);
+        setCurrentLevel(1);
+        setTimeLeft(0);
+        if (timer) clearInterval(timer);
+        setTimer(null);
       })
       .catch((err) => console.error('Error resetting rewards:', err));
   };
@@ -173,8 +165,11 @@ export default function App() {
         onLoad={onLoad}
       />
       <div className="overlay">
+        <button className="logout-button" onClick={logout}>
+          Logout
+        </button>
         <button className="load-button" onClick={loadRewards}>
-          Load Rewards
+          Load Owned Rewards
         </button>
         <div className="rewards-container">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
