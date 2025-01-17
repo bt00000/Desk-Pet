@@ -107,3 +107,66 @@ button {
   text-align: center;
   padding-top: 20px; /* Adds space inside the container */
 }
+
+.app-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: black;
+}
+
+button.claim-button {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2; /* Ensure it appears above the canvas */
+  width: 200px;
+  height: 50px;
+  border-radius: 25px;
+  background: #fff;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  font-weight: 600;
+  color: black;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+
+button.claim-button:hover {
+  background: #ddd;
+}
+
+button.claim-button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+button.reset-button {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2; /* Ensure it appears above the canvas */
+  width: 200px;
+  height: 50px;
+  border-radius: 25px;
+  background: #f44336;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+
+button.reset-button:hover {
+  background: #d32f2f;
+}
