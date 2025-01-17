@@ -7,12 +7,13 @@ export default function App() {
   const [rewards, setRewards] = useState([]);
   const [timer, setTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [timerDuration, setTimerDuration] = useState('3'); // Default timer duration as a string
   const splineRef = useRef(null);
 
   const objectMap = {
     1: 'BedTable',
     2: ['Lamp', 'LampLight'],
-    3: 'Table',
+    3: ['Table', 'Chair'],
     4: 'Window',
     5: 'Computer',
     6: 'Cup',
@@ -88,7 +89,7 @@ export default function App() {
 
     if (timer) clearInterval(timer);
 
-    setTimeLeft(3); // Demo: 3 seconds
+    setTimeLeft(Number(timerDuration));
     const newTimer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -152,10 +153,9 @@ export default function App() {
       .catch((err) => console.error('Error resetting rewards:', err));
   };
 
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  const handleTimerChange = (e) => {
+    const inputValue = e.target.value.replace(/^0+/, ''); // Remove leading zeros
+    setTimerDuration(inputValue || '0'); // Ensure we don't set an empty value
   };
 
   return (
@@ -168,41 +168,55 @@ export default function App() {
         <button className="logout-button" onClick={logout}>
           Logout
         </button>
-        <button className="load-button" onClick={loadRewards}>
-          Load Owned Rewards
-        </button>
+        <div className="load-timer-container">
+          <button className="load-button" onClick={loadRewards}>
+            Load Owned Rewards
+          </button>
+          <div className="timer-container">
+            <label htmlFor="timer-duration" className="timer-label">
+              Set Timer (seconds):
+            </label>
+            <input
+              type="text"
+              id="timer-duration"
+              value={timerDuration}
+              onChange={handleTimerChange}
+              className="timer-input"
+            />
+          </div>
+        </div>
         <div className="rewards-container">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => {
-          const isClaimed = rewards.includes(`Reward #${level}`);
-          const isCurrent = currentLevel === level;
-          const isLocked = currentLevel < level;
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => {
+            const isClaimed = rewards.includes(`Reward #${level}`);
+            const isCurrent = currentLevel === level;
+            const isLocked = currentLevel < level;
 
-          let buttonClass = "reward-button"; // Base class
-          if (isClaimed) {
-            buttonClass += " claimed";
-          } else if (isCurrent) {
-            buttonClass += " current";
-          } else if (isLocked) {
-            buttonClass += " locked";
-          }
+            let buttonClass = 'reward-button';
+            if (isClaimed) {
+              buttonClass += ' claimed';
+            } else if (isCurrent) {
+              buttonClass += ' current';
+            } else if (isLocked) {
+              buttonClass += ' locked';
+            }
 
-          return (
-            <button
-              key={level}
-              className={buttonClass}
-              onMouseEnter={() => isCurrent && startTimer(level)}
-              onMouseLeave={resetTimer}
-              disabled={isLocked || timeLeft > 0}
-            >
-              {isClaimed
-                ? `Reward #${level} Claimed`
-                : isCurrent && timeLeft > 0
-                ? `Time Left: ${formatTime(timeLeft)}`
-                : `Start Reward #${level}`}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={level}
+                className={buttonClass}
+                onMouseEnter={() => isCurrent && startTimer(level)}
+                onMouseLeave={resetTimer}
+                disabled={isLocked || timeLeft > 0}
+              >
+                {isClaimed
+                  ? `Reward #${level} Claimed`
+                  : isCurrent && timeLeft > 0
+                  ? `Time Left: ${timeLeft}s`
+                  : `Start Reward #${level}`}
+              </button>
+            );
+          })}
+        </div>
         <button className="reset-button" onClick={resetRewards}>
           Reset Rewards
         </button>
