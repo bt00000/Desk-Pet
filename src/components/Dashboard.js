@@ -9,100 +9,109 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(0);
   const splineRef = useRef(null);
 
-  // Map levels to object names in Spline
   const objectMap = {
-    1: 'BedTable', // Reward #1
-    2: ['Lamp', 'LampLight'], // Reward #2
-    3: 'Table', // Reward #3
-    4: 'Window', // Reward #4
-    5: 'Computer', // Reward #5
-    6: 'Cup', // Reward #6
-    7: 'Bed', // Reward #7
-    8: 'Plant', // Reward #8
-    9: 'Books', // Reward #9
-    10: 'Clock', // Reward #10
+    1: 'BedTable',
+    2: ['Lamp', 'LampLight'],
+    3: 'Table',
+    4: 'Window',
+    5: 'Computer',
+    6: 'Cup',
+    7: 'Bed',
+    8: 'Plant',
+    9: 'Books',
+    10: 'Clock',
   };
 
-  // Default visible object
   const defaultVisibleObject = 'Floor';
 
-  // Update visible objects based on rewards
-  useEffect(() => {
+  const updateVisibility = () => {
     if (!splineRef.current) return;
 
     const spline = splineRef.current;
 
-    // Hide all objects initially except the default visible object
+    console.log('Updating object visibility...');
+    const visibleObjects = [defaultVisibleObject].concat(
+      rewards.flatMap((reward) =>
+        Array.isArray(objectMap[reward.replace('Reward #', '')])
+          ? objectMap[reward.replace('Reward #', '')]
+          : [objectMap[reward.replace('Reward #', '')]]
+      )
+    );
+
     Object.values(objectMap)
       .flat()
-      .concat(defaultVisibleObject)
       .forEach((objectName) => {
         const object = spline.findObjectByName(objectName);
-        if (object) object.visible = false;
+        if (object) {
+          object.visible = visibleObjects.includes(objectName);
+          console.log(
+            `Set ${objectName} to ${object.visible ? 'visible' : 'invisible'}`
+          );
+        }
       });
 
-    // Show only the default object and rewards
-    [defaultVisibleObject]
-      .concat(
-        rewards.flatMap((reward) =>
-          Array.isArray(objectMap[reward.replace('Reward #', '')])
-            ? objectMap[reward.replace('Reward #', '')]
-            : [objectMap[reward.replace('Reward #', '')]]
-        )
-      )
-      .forEach((objectName) => {
-        const object = spline.findObjectByName(objectName);
-        if (object) object.visible = true;
+    const floorObject = spline.findObjectByName(defaultVisibleObject);
+    if (floorObject) floorObject.visible = true;
+  };
+
+  const loadRewards = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:5001/levels', {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      const data = await res.json();
+      console.log('Fetched levels and rewards:', data);
+
+      setCurrentLevel(data.currentLevel);
+      setRewards(data.rewards || []);
+    } catch (err) {
+      console.error('Error fetching levels:', err);
+    }
+  };
+
+  useEffect(() => {
+    updateVisibility();
   }, [rewards]);
 
-  // Fetch levels and rewards on load
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+  const onLoad = (spline) => {
+    console.log('Spline loaded!');
+    splineRef.current = spline;
+    updateVisibility();
+  };
 
-    fetch('http://localhost:5001/levels', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setCurrentLevel(data.currentLevel);
-        setRewards(data.rewards || []);
-      })
-      .catch((err) => console.error('Error fetching levels:', err));
-  }, []);
-
-  // Start timer for unlocking rewards
   const startTimer = (level) => {
-    if (currentLevel !== level) return; // Only start the timer if it's the current level
-  
-    if (timer) clearInterval(timer); // Clear any existing timer before starting a new one
-  
-    setTimeLeft(0.05 * 60); // Timer set to 15 minutes (900 seconds)
+    if (currentLevel !== level) return;
+
+    if (timer) clearInterval(timer);
+
+    setTimeLeft(3); // Demo: 3 seconds
     const newTimer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(newTimer); // Clear the timer when it finishes
-          setTimer(null); // Reset the timer state
-          completeReward(level); // Complete the reward
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(newTimer);
+          setTimer(null);
+          completeReward(level);
           return 0;
         }
-        return prevTime - 1;
+        return prev - 1;
       });
     }, 1000);
-  
-    setTimer(newTimer); // Store the new timer instance
-  };
-  
 
-  // Reset the timer if the mouse leaves the button
+    setTimer(newTimer);
+  };
+
   const resetTimer = () => {
-    if (timer) clearInterval(timer); // Clear the timer
-    setTimeLeft(0); // Reset time left
-    setTimer(null); // Reset timer state
+    if (timer) clearInterval(timer);
+    setTimeLeft(0);
+    setTimer(null);
   };
 
-  // Complete reward after timer ends
   const completeReward = (level) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -126,7 +135,6 @@ export default function App() {
       .catch((err) => console.error('Error completing reward:', err));
   };
 
-  // Reset all rewards and visibility
   const resetRewards = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -145,43 +153,13 @@ export default function App() {
           setRewards([]);
           setCurrentLevel(1);
           setTimeLeft(0);
-          if (timer) clearInterval(timer); // Clear any running timer
+          if (timer) clearInterval(timer);
           setTimer(null);
         }
       })
       .catch((err) => console.error('Error resetting rewards:', err));
   };
 
-  // Handle Spline onLoad event
-  function onLoad(spline) {
-    console.log('Spline loaded!', spline);
-    splineRef.current = spline;
-
-    // Initially hide all objects except the default visible object
-    Object.values(objectMap)
-      .flat()
-      .concat(defaultVisibleObject)
-      .forEach((objectName) => {
-        const object = spline.findObjectByName(objectName);
-        if (object) object.visible = false;
-      });
-
-    // Show default objects and rewards
-    [defaultVisibleObject]
-      .concat(
-        rewards.flatMap((reward) =>
-          Array.isArray(objectMap[reward.replace('Reward #', '')])
-            ? objectMap[reward.replace('Reward #', '')]
-            : [objectMap[reward.replace('Reward #', '')]]
-        )
-      )
-      .forEach((objectName) => {
-        const object = spline.findObjectByName(objectName);
-        if (object) object.visible = true;
-      });
-  }
-
-  // Format time as MM:SS
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -195,30 +173,25 @@ export default function App() {
         onLoad={onLoad}
       />
       <div className="overlay">
+        <button className="load-button" onClick={loadRewards}>
+          Load Rewards
+        </button>
         <div className="rewards-container">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => {
-            const isClaimed = rewards.includes(`Reward #${level}`);
-            const isCurrent = currentLevel === level;
-            const isLocked = currentLevel < level;
-
-            return (
-              <button
-                key={level}
-                className={`reward-button ${isClaimed ? '' : ''} ${isLocked ? 'locked' : ''}`}
-                onMouseEnter={() => {
-                  if (!isLocked) startTimer(level); // Start timer only for unlocked and current button
-                }}
-                onMouseLeave={resetTimer}
-                disabled={isLocked || timeLeft > 0}
-              >
-                {isClaimed
-                  ? `Reward #${level} Claimed`
-                  : isCurrent && timeLeft > 0
-                  ? `Time Left: ${formatTime(timeLeft)}`
-                  : `Start Reward #${level}`}
-              </button>
-            );
-          })}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+            <button
+              key={level}
+              className={`reward-button ${currentLevel < level ? 'locked' : ''}`}
+              onMouseEnter={() => currentLevel === level && startTimer(level)}
+              onMouseLeave={resetTimer}
+              disabled={currentLevel < level || timeLeft > 0}
+            >
+              {rewards.includes(`Reward #${level}`)
+                ? `Reward #${level} Claimed`
+                : currentLevel === level && timeLeft > 0
+                ? `Time Left: ${formatTime(timeLeft)}`
+                : `Start Reward #${level}`}
+            </button>
+          ))}
         </div>
         <button className="reset-button" onClick={resetRewards}>
           Reset Rewards
