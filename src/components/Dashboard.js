@@ -74,8 +74,10 @@ export default function App() {
 
   // Start timer for unlocking rewards
   const startTimer = (level) => {
+    if (currentLevel !== level) return; // Only start the timer if it's the current level
+  
     if (timer) clearInterval(timer); // Clear any existing timer before starting a new one
-
+  
     setTimeLeft(0.05 * 60); // Timer set to 15 minutes (900 seconds)
     const newTimer = setInterval(() => {
       setTimeLeft((prevTime) => {
@@ -88,9 +90,10 @@ export default function App() {
         return prevTime - 1;
       });
     }, 1000);
-
+  
     setTimer(newTimer); // Store the new timer instance
   };
+  
 
   // Reset the timer if the mouse leaves the button
   const resetTimer = () => {
@@ -193,21 +196,29 @@ export default function App() {
       />
       <div className="overlay">
         <div className="rewards-container">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
-            <button
-              key={level}
-              className={`reward-button ${currentLevel >= level ? '' : 'locked'}`}
-              onMouseEnter={() => startTimer(level)}
-              onMouseLeave={resetTimer}
-              disabled={currentLevel < level || timeLeft > 0}
-            >
-              {rewards.includes(`Reward #${level}`)
-                ? `Reward #${level} Claimed`
-                : timeLeft > 0 && level === currentLevel
-                ? `Time Left: ${formatTime(timeLeft)}`
-                : `Start Reward #${level}`}
-            </button>
-          ))}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => {
+            const isClaimed = rewards.includes(`Reward #${level}`);
+            const isCurrent = currentLevel === level;
+            const isLocked = currentLevel < level;
+
+            return (
+              <button
+                key={level}
+                className={`reward-button ${isClaimed ? '' : ''} ${isLocked ? 'locked' : ''}`}
+                onMouseEnter={() => {
+                  if (!isLocked) startTimer(level); // Start timer only for unlocked and current button
+                }}
+                onMouseLeave={resetTimer}
+                disabled={isLocked || timeLeft > 0}
+              >
+                {isClaimed
+                  ? `Reward #${level} Claimed`
+                  : isCurrent && timeLeft > 0
+                  ? `Time Left: ${formatTime(timeLeft)}`
+                  : `Start Reward #${level}`}
+              </button>
+            );
+          })}
         </div>
         <button className="reset-button" onClick={resetRewards}>
           Reset Rewards
