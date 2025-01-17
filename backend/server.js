@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, minlength: 1 },
   password: { type: String, required: true, minlength: 3 },
   rewards: { type: [String], default: [] }, // List of claimed rewards
+  currentLevel: { type: Number, default: 1 }, // Tracks user level progress
 });
 
 const User = mongoose.model('User', userSchema);
@@ -42,7 +43,7 @@ app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || username.length < 1) {
-    return res.status(400).json({ message: 'Username must be at least 1 characters long' });
+    return res.status(400).json({ message: 'Username must be at least 1 character long' });
   }
 
   if (password.length < 3) {
@@ -83,14 +84,12 @@ app.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid username or password' });
   }
 
-  // Token without expiration
   const token = jwt.sign({ id: user._id }, secret);
   res.status(200).json({ token });
 });
 
-
-// Fetch rewards route
-app.get('/rewards', async (req, res) => {
+// Fetch rewards and levels
+app.get('/levels', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -100,16 +99,16 @@ app.get('/rewards', async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.status(200).json({ rewards: user.rewards });
+    res.status(200).json({ rewards: user.rewards, currentLevel: user.currentLevel });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Claim reward route
-app.post('/claim-reward', async (req, res) => {
-  const { reward } = req.body;
+// Start a reward
+app.post('/start-reward', async (req, res) => {
+  const { level } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -119,21 +118,26 @@ app.post('/claim-reward', async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (user.rewards.includes(reward)) {
-      return res.status(400).json({ error: `${reward} already claimed` });
+    if (level > user.currentLevel) {
+      return res.status(400).json({ error: 'Level locked. Unlock previous rewards first.' });
     }
 
-    user.rewards.push(reward);
-    await user.save();
-    res.status(200).json({ message: `${reward} claimed successfully`, rewards: user.rewards });
+    const rewardName = `Reward #${level}`;
+    if (!user.rewards.includes(rewardName)) {
+      user.rewards.push(rewardName);
+      user.currentLevel = Math.max(user.currentLevel, level + 1);
+      await user.save();
+    }
+
+    res.status(200).json({ message: `${rewardName} unlocked`, rewards: user.rewards });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Reset reward route
-app.post('/reset-reward', async (req, res) => {
+// Reset rewards
+app.post('/reset-rewards', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -143,15 +147,16 @@ app.post('/reset-reward', async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    user.rewards = user.rewards.filter((reward) => reward !== 'Computer'); // Reset specific reward
+    user.rewards = [];
+    user.currentLevel = 1;
     await user.save();
-    res.status(200).json({ message: 'Reward reset successfully', rewards: user.rewards });
+
+    res.status(200).json({ message: 'All rewards and levels reset', rewards: user.rewards });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 // Start server
 app.listen(port, () => {

@@ -105,7 +105,7 @@ button {
 
 .toggle {
   text-align: center;
-  padding-top: 20px; /* Adds space inside the container */
+  padding-top: 20px;
 }
 
 .app-container {
@@ -116,12 +116,34 @@ button {
   background-color: black;
 }
 
-button.claim-button {
+/* Spline Scene */
+.spline-scene {
   position: absolute;
-  bottom: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2; /* Ensure it appears above the canvas */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Overlay for buttons and UI */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 20px;
+  z-index: 2;
+}
+
+/* Claim Button */
+button.claim-button {
+  margin-bottom: 10px;
   width: 200px;
   height: 50px;
   border-radius: 25px;
@@ -146,12 +168,9 @@ button.claim-button:disabled {
   cursor: not-allowed;
 }
 
+/* Reset Button */
 button.reset-button {
-  position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2; /* Ensure it appears above the canvas */
+  margin-top: 10px;
   width: 200px;
   height: 50px;
   border-radius: 25px;
@@ -169,4 +188,32 @@ button.reset-button {
 
 button.reset-button:hover {
   background: #d32f2f;
+}
+
+/* Rewards Container */
+.rewards-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align buttons to the left */
+  gap: 10px;
+  z-index: 3;
+}
+
+/* Reward Button */
+.reward-button {
+  width: 200px;
+  height: 50px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left; /* Align text to the left */
+  font-size: 16px;
+  padding: 10px;
+}
+
+.reward-button.locked {
+  background-color: #aaa;
+  cursor: not-allowed;
 }
