@@ -51,7 +51,7 @@ body {
 .load-button {
   width: 180px;
   height: auto;
-  background-color: #4caf50;
+  background-color: #007bff; /* Blue color for Load Rewards */
   color: white;
   border: none;
   border-radius: 5px;
@@ -66,7 +66,7 @@ body {
 }
 
 .load-button:hover {
-  background-color: #45a049;
+  background-color: #0056b3;
 }
 
 /* Rewards Container */
@@ -82,34 +82,47 @@ body {
 .reward-button {
   width: 180px;
   height: auto;
-  background-color: #4caf50;
-  color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  text-align: left; /* Align text to the left */
+  text-align: left;
   font-size: 14px;
   padding: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   transition: background 0.3s ease;
-  white-space: normal; /* Allow text to wrap */
-  word-wrap: break-word; /* Break long words */
+  white-space: normal;
+  word-wrap: break-word;
 }
 
+/* Claimed Rewards */
+.reward-button.claimed {
+  background-color: #4caf50; /* Green for claimed rewards */
+  color: white;
+}
+
+/* Current Reward */
+.reward-button.current {
+  background-color: #ffc107; /* Yellow for the current reward */
+  color: black;
+}
+
+/* Locked Rewards */
 .reward-button.locked {
-  background-color: #aaa;
+  background-color: #aaa; /* Gray for locked rewards */
+  color: white;
   cursor: not-allowed;
 }
 
+/* Hover Effects for Active Buttons */
 .reward-button:hover:not(.locked) {
-  background-color: #45a049;
+  background-color: #45a049; /* Darker green for hover */
 }
 
 /* Reset Button */
 .reset-button {
   width: 180px;
   height: auto;
-  background-color: #f44336;
+  background-color: #f44336; /* Red color for Reset button */
   color: white;
   border: none;
   border-radius: 5px;
@@ -225,6 +238,7 @@ button {
   padding-top: 20px;
 }
 
+/* Logout Button */
 .logout-button {
   position: absolute;
   top: 20px;

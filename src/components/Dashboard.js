@@ -172,22 +172,37 @@ export default function App() {
           Load Owned Rewards
         </button>
         <div className="rewards-container">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => {
+          const isClaimed = rewards.includes(`Reward #${level}`);
+          const isCurrent = currentLevel === level;
+          const isLocked = currentLevel < level;
+
+          let buttonClass = "reward-button"; // Base class
+          if (isClaimed) {
+            buttonClass += " claimed";
+          } else if (isCurrent) {
+            buttonClass += " current";
+          } else if (isLocked) {
+            buttonClass += " locked";
+          }
+
+          return (
             <button
               key={level}
-              className={`reward-button ${currentLevel < level ? 'locked' : ''}`}
-              onMouseEnter={() => currentLevel === level && startTimer(level)}
+              className={buttonClass}
+              onMouseEnter={() => isCurrent && startTimer(level)}
               onMouseLeave={resetTimer}
-              disabled={currentLevel < level || timeLeft > 0}
+              disabled={isLocked || timeLeft > 0}
             >
-              {rewards.includes(`Reward #${level}`)
+              {isClaimed
                 ? `Reward #${level} Claimed`
-                : currentLevel === level && timeLeft > 0
+                : isCurrent && timeLeft > 0
                 ? `Time Left: ${formatTime(timeLeft)}`
                 : `Start Reward #${level}`}
             </button>
-          ))}
-        </div>
+          );
+        })}
+      </div>
         <button className="reset-button" onClick={resetRewards}>
           Reset Rewards
         </button>
